@@ -1,1 +1,94 @@
+/* =========================================
+   ECOMMERCE FUNNEL & CONVERSION ANALYSIS
+   ========================================= */
+
+-- 1. Total Unique Users
+SELECT COUNT(DISTINCT user_id) AS total_users
+FROM ecommerce;
+
+
+-- 2. Funnel Stage Count (View → Cart → Purchase)
+SELECT
+    event_type,
+    COUNT(DISTINCT user_id) AS users
+FROM ecommerce
+GROUP BY event_type
+ORDER BY users DESC;
+
+
+-- 3. Conversion Rate (View → Purchase)
+
+WITH views AS (
+    SELECT DISTINCT user_id
+    FROM ecommerce
+    WHERE event_type = 'view'
+),
+purchases AS (
+    SELECT DISTINCT user_id
+    FROM ecommerce
+    WHERE event_type = 'purchase'
+)
+
+SELECT
+    COUNT(p.user_id) AS purchasers,
+    COUNT(v.user_id) AS viewers,
+    ROUND(COUNT(p.user_id) * 100.0 / COUNT(v.user_id), 2) AS conversion_rate_percent
+FROM views v
+LEFT JOIN purchases p
+ON v.user_id = p.user_id;
+
+
+-- 4. Top 10 Products by Purchases
+SELECT
+    product_id,
+    COUNT(*) AS purchase_count
+FROM ecommerce
+WHERE event_type = 'purchase'
+GROUP BY product_id
+ORDER BY purchase_count DESC
+LIMIT 10;
+
+
+-- 5. Repeat Customers (More than 1 Purchase)
+SELECT
+    user_id,
+    COUNT(*) AS purchase_count
+FROM ecommerce
+WHERE event_type = 'purchase'
+GROUP BY user_id
+HAVING COUNT(*) > 1
+ORDER BY purchase_count DESC;
+
+
+-- 6. Daily Purchase Trend
+SELECT
+    DATE(event_time) AS purchase_date,
+    COUNT(*) AS total_purchases
+FROM ecommerce
+WHERE event_type = 'purchase'
+GROUP BY DATE(event_time)
+ORDER BY purchase_date;
+
+
+-- 7. Cart Abandonment (Added to cart but no purchase)
+
+WITH cart_users AS (
+    SELECT DISTINCT user_id
+    FROM ecommerce
+    WHERE event_type = 'cart'
+),
+purchase_users AS (
+    SELECT DISTINCT user_id
+    FROM ecommerce
+    WHERE event_type = 'purchase'
+)
+
+SELECT
+    COUNT(c.user_id) AS cart_users,
+    COUNT(p.user_id) AS purchasers,
+    COUNT(c.user_id) - COUNT(p.user_id) AS abandoned_users,
+    ROUND((COUNT(c.user_id) - COUNT(p.user_id)) * 100.0 / COUNT(c.user_id), 2) AS abandonment_rate_percent
+FROM cart_users c
+LEFT JOIN purchase_users p
+ON c.user_id = p.user_id;
 
