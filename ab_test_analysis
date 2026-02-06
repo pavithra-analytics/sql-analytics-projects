@@ -1,1 +1,75 @@
+/* Step 1: Assign users to experiment groups (if not already present) */
+WITH user_groups AS (
+    SELECT
+        user_id,
+        CASE
+            WHEN MOD(ABS(user_id), 2) = 0 THEN 'A'
+            ELSE 'B'
+        END AS experiment_group
+    FROM (SELECT DISTINCT user_id FROM ecommerce)
+),
 
+/* Step 2: Identify if user converted (purchased at least once) */
+user_conversions AS (
+    SELECT
+        u.user_id,
+        u.experiment_group,
+        CASE 
+            WHEN SUM(CASE WHEN e.event_type = 'purchase' THEN 1 ELSE 0 END) > 0
+            THEN 1
+            ELSE 0
+        END AS converted
+    FROM user_groups u
+    LEFT JOIN ecommerce e
+        ON u.user_id = e.user_id
+    GROUP BY u.user_id, u.experiment_group
+),
+
+/* Step 3: Calculate conversion rate per group */
+conversion_summary AS (
+    SELECT
+        experiment_group,
+        COUNT(*) AS total_users,
+        SUM(converted) AS users_converted,
+        ROUND(SUM(converted) * 100 / COUNT(*), 2) AS conversion_rate_percent
+    FROM user_conversions
+    GROUP BY experiment_group
+),
+
+/* Step 4: Compute statistics for Z-test */
+stats AS (
+    SELECT
+        experiment_group,
+        COUNT(*) AS n,
+        SUM(converted) AS k,
+        SUM(converted) / COUNT(*) AS p
+    FROM user_conversions
+    GROUP BY experiment_group
+),
+
+p_values AS (
+    SELECT 
+        (SELECT p FROM stats WHERE experiment_group = 'A') AS p_A,
+        (SELECT p FROM stats WHERE experiment_group = 'B') AS p_B,
+        (SELECT n FROM stats WHERE experiment_group = 'A') AS n_A,
+        (SELECT n FROM stats WHERE experiment_group = 'B') AS n_B,
+        (SELECT SUM(converted)/COUNT(*) 
+         FROM user_conversions
+         WHERE experiment_group IN ('A','B')) AS p_pool
+    FROM dual
+)
+
+SELECT
+    c.experiment_group,
+    c.total_users,
+    c.users_converted,
+    c.conversion_rate_percent,
+    CASE 
+        WHEN c.experiment_group = 'B' THEN
+            (p_values.p_B - p_values.p_A) /
+            SQRT(p_values.p_pool * (1 - p_values.p_pool) * (1/p_values.n_A + 1/p_values.n_B))
+        ELSE NULL
+    END AS z_score_vs_A
+FROM conversion_summary c
+CROSS JOIN p_values
+ORDER BY c.experiment_group;
