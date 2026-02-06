@@ -1,1 +1,44 @@
+/* Step 1: Total revenue per day */
+WITH daily_revenue AS (
+    SELECT
+        TRUNC(event_time) AS sale_date,
+        SUM(price) AS total_revenue,
+        COUNT(DISTINCT user_id) AS unique_customers
+    FROM ecommerce
+    WHERE event_type = 'purchase'
+    GROUP BY TRUNC(event_time)
+    ORDER BY sale_date
+),
 
+/* Step 2: Revenue by product */
+product_revenue AS (
+    SELECT
+        product_id,
+        COUNT(*) AS units_sold,
+        SUM(price) AS revenue
+    FROM ecommerce
+    WHERE event_type = 'purchase'
+    GROUP BY product_id
+    ORDER BY revenue DESC
+),
+
+/* Step 3: Average Order Value (AOV) */
+orders AS (
+    SELECT
+        user_id,
+        TRUNC(event_time) AS order_date,
+        SUM(price) AS order_value
+    FROM ecommerce
+    WHERE event_type = 'purchase'
+    GROUP BY user_id, TRUNC(event_time)
+)
+SELECT
+    d.sale_date,
+    d.total_revenue,
+    d.unique_customers,
+    ROUND(AVG(o.order_value),2) AS avg_order_value
+FROM daily_revenue d
+LEFT JOIN orders o
+    ON d.sale_date = o.order_date
+GROUP BY d.sale_date, d.total_revenue, d.unique_customers
+ORDER BY d.sale_date;
