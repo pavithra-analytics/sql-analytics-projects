@@ -80,3 +80,43 @@ Evaluate the impact of a hypothetical A/B test on purchase conversion, measuring
 
 **Skills Demonstrated:**  
 SQL (CASE statements, aggregations), Experiment Analysis, Statistical Testing, Product & Business Analytics
+
+# Project 4: Ecommerce Sales Analysis
+
+**Objective:**  
+Analyze sales performance over time to understand revenue trends, top-selling products, average order value, and contributions from new vs repeat customers. This project helps identify which products drive revenue and highlights opportunities to optimize sales strategy.
+
+## SQL Analysis Performed
+
+1. **Daily Revenue Trends**  
+   - Total revenue per day  
+   - Number of unique customers per day  
+
+2. **Product Performance**  
+   - Total revenue and units sold per product  
+   - Identify top-performing products  
+
+3. **Average Order Value (AOV)**  
+   - Total revenue per order per user per day  
+   - Average across all orders  
+
+4. **Repeat vs New Customers Revenue** *(optional enhancement)*  
+   - Compare revenue contribution from returning vs new users  
+
+## Key Insights / Results (Example)
+
+- Total Revenue (month): **$120,000**  
+- Average Daily Revenue: **$4,000**  
+- Average Order Value (AOV): **$80**  
+- Top Product by Revenue: Product ID 102 → **$12,500**  
+- Top 10 products contribute **40% of total revenue**  
+- Repeat customers (≥2 purchases) contribute **25% of total revenue**  
+- Revenue tends to **peak mid-week and on weekends**, suggesting marketing timing opportunities  
+
+## Skills Demonstrated
+
+- SQL: Aggregations, CTEs, GROUP BY, date truncation  
+- Business Analytics: Revenue analysis, product performance, trend analysis  
+- Product Insight: Identifying top products and AOV patterns  
+- Customer Analytics: Revenue segmentation by repeat vs new customers  
+
